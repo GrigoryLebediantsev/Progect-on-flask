@@ -1,4 +1,3 @@
-import
 from app import app, USERS, models
 from flask import request, Response
 from http import HTTPStatus
@@ -19,7 +18,8 @@ def user_create():
     phone = data["phone"]
     email = data["email"]
 
-    # todo check phone and email validity
+    if not models.User.validate_emile(email) or not models.User.validate_phone(phone):
+        return Response(status=HTTPStatus.BAD_REQUEST)
 
     user = models.User(id, first_name, last_name, phone, email)
     USERS.append(user)
@@ -31,7 +31,7 @@ def user_create():
                 "last_name": user.last_name,
                 "phone": user.phone,
                 "email": user.email,
-                "score": user.score
+                "score": user.score,
             }
         ),
         HTTPStatus.OK,
@@ -39,7 +39,8 @@ def user_create():
     )
     return response
 
-@app.get('/user/<int:user_id>/')
+
+@app.get("/user/<int:user_id>/")
 def get_user(user_id):
     if user_id < 0 or user_id >= len(USERS):
         return Response(status=HTTPStatus.NOT_FOUND)
@@ -52,7 +53,7 @@ def get_user(user_id):
                 "last_name": user.last_name,
                 "phone": user.phone,
                 "email": user.email,
-                "score": user.score
+                "score": user.score,
             }
         ),
         HTTPStatus.OK,
