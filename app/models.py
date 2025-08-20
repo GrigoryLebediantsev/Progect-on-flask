@@ -18,5 +18,6 @@ class User:
 
     @staticmethod
     def validate_phone(phone):
-        number = phonenumbers.parse(phone)
-        return phonenumbers.is_valid_number(number)
+        valid = re.match(r"^\+7\d{10}$", phone)
+        return True if valid else False
+

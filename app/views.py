@@ -18,7 +18,10 @@ def user_create():
     phone = data["phone"]
     email = data["email"]
 
-    if not models.User.validate_emile(email) or not models.User.validate_phone(phone):
+    if not models.User.validate_emile(email):
+        return Response(status=HTTPStatus.BAD_REQUEST)
+
+    if not models.User.validate_phone(phone):
         return Response(status=HTTPStatus.BAD_REQUEST)
 
     user = models.User(id, first_name, last_name, phone, email)
