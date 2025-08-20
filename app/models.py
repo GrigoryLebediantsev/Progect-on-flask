@@ -35,7 +35,6 @@ class Expression:
     def to_str(self):
         str_values = list(map(str, self.values))
         expr_str = f' {self.operation} '.join(str_values)
-        # todo generate expression for len(values)>2
         return expr_str
 
 
