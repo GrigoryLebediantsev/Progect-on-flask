@@ -1,4 +1,4 @@
-from app import app, models, QUESTIONS
+from app import app, models, QUESTIONS, USERS
 from flask import request, Response
 from http import HTTPStatus
 from json import dumps
@@ -19,7 +19,7 @@ def create_question():
             return Response(status=HTTPStatus.BAD_REQUEST)
         question = models.OneAnswer(question_id, title, description, answer)
         QUESTIONS.append(question)
-        response = Response(
+        return Response(
             dumps(
                 {
                     "id": question.id,
@@ -42,7 +42,7 @@ def create_question():
             question_id, title, description, choices, answer
         )
         QUESTIONS.append(question)
-        response = Response(
+        return Response(
             dumps(
                 {
                     "id": question.id,
@@ -58,9 +58,7 @@ def create_question():
         )
 
     else:
-        return Response(status=HTTPStatus.BAD_REQUEST)
-
-    return response
+        return Response("Недопустимый тип вопроса", status=HTTPStatus.BAD_REQUEST)
 
 
 @app.get("/questions/random")
@@ -78,4 +76,42 @@ def random_quest():
         ),
         status=HTTPStatus.OK,
         mimetype="application/json",
+    )
+
+
+@app.post("/questions/<int:question_id>/solve")
+def solve_quest(question_id):
+    data = request.get_json()
+    user_id = data["user_id"]
+    user_answer = data["user_answer"]
+
+    try:
+        question = QUESTIONS[question_id]
+        user = USERS[user_id]
+    except IndexError:
+        return Response(
+            "Неправильный индекс у пользователя или вопроса",
+            status=HTTPStatus.BAD_REQUEST,
+        )
+
+    user.add_to_history(question.to_dict(), user_answer)
+
+    if question.answer == user_answer:
+        user.increase_score(question.reward)
+        result = "Correct"
+        reward = question.reward
+    else:
+        result = "Wrong"
+        reward = 0
+
+    return Response(
+        dumps(
+            {
+                "question_id": question.id,
+                "result": result,
+                "reward": reward,
+            }
+        ),
+        status=HTTPStatus.OK,
+        mimetype='application/json'
     )

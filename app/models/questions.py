@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-import re
-import random
+
 
 class Question(ABC):
     def __init__(self, id: int, title: str, description: str, reward=None):
@@ -27,15 +26,25 @@ class OneAnswer(Question):
         return self._answer
 
     @answer.setter
-    def answer(self, value):
+    def answer(self, value: str):
         self._answer = value
 
     @staticmethod
     def is_valid(answer) -> bool:
         return isinstance(answer, str)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.id}) {self.title}"
+
+    def to_dict(self):
+        return dict(
+            {
+                "title": self.title,
+                "description": self.description,
+                "type": "ONE-ANSWER",
+                "answer": self.answer,
+            }
+        )
 
 
 class MultipyChoice(Question):
@@ -57,7 +66,7 @@ class MultipyChoice(Question):
         return self._answer
 
     @answer.setter
-    def answer(self, value):
+    def answer(self, value: int):
         self._answer = value
 
     @staticmethod
@@ -68,3 +77,15 @@ class MultipyChoice(Question):
 
     def __repr__(self):
         return f"{self.id}) {self.title}"
+
+    def to_dict(self):
+        return dict(
+            {
+                "title": self.title,
+                "description": self.description,
+                "type": "ONE-ANSWER",
+                "choices": self.choices,
+                "reward": self.reward,
+                "answer": self.answer,
+            }
+        )

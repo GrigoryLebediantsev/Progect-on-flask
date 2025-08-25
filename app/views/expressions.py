@@ -15,7 +15,7 @@ def generate_expr():
 
     if not Expression.validate_expression_params(count_nums, operation):
         return Response(
-            "Более двух операций поддерживаются только для умножения возведения в степень и сложения",
+            "Более двух операций поддерживаются только для умножения, возведения в степень и сложения",
             status=HTTPStatus.BAD_REQUEST,
         )
 
@@ -25,10 +25,11 @@ def generate_expr():
 
     try:
         expression = Expression(expr_id, operation, *values)
-    except ValueError:
-        return Response(status=HTTPStatus.BAD_REQUEST)
+    except ValueError as e:
+        return Response(str(e), status=HTTPStatus.BAD_REQUEST)
 
     EXPRS.append(expression)
+
     return Response(
         dumps({"id": expression.id, "values": values}),
         HTTPStatus.OK,
@@ -38,12 +39,17 @@ def generate_expr():
 
 @app.get("/math/<int:expr_id>")
 def get_expr(expr_id):
-    if expr_id > len(EXPRS) - 1 or expr_id < 0:
+
+    try:
+        expression = EXPRS[expr_id]
+    except IndexError:
         return Response(
-            "id вышел за границы существоующих выражений", status=HTTPStatus.NOT_FOUND
+            "Не найдено выражения с таким id", status=HTTPStatus.BAD_REQUEST
         )
-    expression = EXPRS[expr_id]
-    response = Response(
+    except ValueError:
+        return Response("Некорректный тип данных для id", status=HTTPStatus.BAD_REQUEST)
+
+    return Response(
         dumps(
             {
                 "id": expression.id,
@@ -54,28 +60,41 @@ def get_expr(expr_id):
         HTTPStatus.OK,
         mimetype="application/json",
     )
-    return response
 
 
 @app.post("/math/<int:expr_id>/solve")
 def solve_expr(expr_id):
-
-    if expr_id > len(EXPRS) - 1 or expr_id < 0:
-        return Response(status=HTTPStatus.NOT_FOUND)
-
     data = request.get_json()
     user_id = data["user_id"]
-
-    if user_id > len(USERS) - 1 or user_id < 0:
-        return Response(status=HTTPStatus.NOT_FOUND)
-
     user_answer = data["user_answer"]
-    expression = EXPRS[expr_id]
-    user = USERS[user_id]
-    result = expression.check_answer(user_answer, user)
-    response = Response(
-        dumps({"expr_id": expr_id, "resault": result, "reward": expression.reward}),
+
+    try:
+        expression = EXPRS[expr_id]
+    except IndexError:
+        return Response(
+            "Не существует выражения с таким id", status=HTTPStatus.BAD_REQUEST
+        )
+
+    try:
+        user = USERS[user_id]
+    except IndexError:
+        return Response(
+            "Не существует пользователя с таким id", status=HTTPStatus.BAD_REQUEST
+        )
+
+    result = expression.check_answer(user_answer)
+
+    user.add_to_history(expression.to_dict(), user_answer)  # Очень не нравится этот момент
+
+    if result == "correct":
+        user.increase_score(expression.reward)
+        reward = expression.reward
+    else:
+        reward = 0
+
+
+    return Response(
+        dumps({"expr_id": expr_id, "resault": result, "reward": reward}),
         status=HTTPStatus.OK,
         mimetype="application/json",
     )
-    return response

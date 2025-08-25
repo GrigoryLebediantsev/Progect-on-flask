@@ -3,7 +3,8 @@ import random
 
 class Expression:
     OPERATIONS = ["+", "*", "-", "//", "**"]
-    def __init__(self, id, operation, *values, reward=None):
+
+    def __init__(self, id: int, operation: str, *values, reward=None):
 
         if reward is None:
             reward = len(values) - 1
@@ -14,7 +15,7 @@ class Expression:
             and isinstance(values, tuple)
             and isinstance(reward, int)
         ):
-            raise ValueError
+            raise ValueError("Некорректный тип данных у атрибутов")
 
         self.id = id
         self.operation = operation
@@ -26,7 +27,8 @@ class Expression:
         return eval(self.to_str)
 
     @property
-    def to_str(self):
+    def to_str(self) -> str:
+        """Возвращает выражение в строковом виде"""
         str_values = list(map(str, self.values))
         expr_str = f" {self.operation} ".join(str_values)
         return expr_str
@@ -56,12 +58,21 @@ class Expression:
             return False
         return True
 
-    def check_answer(self, user_answer, user):
+    def check_answer(self, user_answer):
         """
-        Проверяет ответ пользователя и увеличивает его score при верном ответе.
+        Проверяет ответ пользователя.
         Возвращает "correct" или "wrong".
         """
         if user_answer == self.answer:
-            user.increase_score(self.reward)
             return "correct"
         return "wrong"
+
+    def to_dict(self):
+        return dict(
+            {
+                "operation": self.operation,
+                "values": list(self.values),
+                "reward": self.reward,
+                "answer": self.answer,
+            }
+        )
