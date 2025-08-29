@@ -1,81 +1,78 @@
-from app import app, models, QUESTIONS, USERS
+from app import app, models
 from flask import request, Response
 from http import HTTPStatus
 from json import dumps
-import random
+from app.services.answer_checker import AnswerChecker
+from app.adapter.in_memory import InMemoryDatabase
+from app.dto.questions import GenerateQuestionInput
+from app.adapter.history import UserHistory
 
 
 @app.post("/questions/create")
 def create_question():
     data = request.get_json()
-    title = data["title"]
-    description = data["description"]
-    question_type = data["type"]
-    question_id = len(QUESTIONS)
 
-    if question_type == "ONE-ANSWER":
-        answer = data["answer"]
-        if not models.OneAnswer.is_valid(answer):
-            return Response(status=HTTPStatus.BAD_REQUEST)
-        question = models.OneAnswer(question_id, title, description, answer)
-        QUESTIONS.append(question)
+    question_input = GenerateQuestionInput(**data)
+
+    if data["type"] == "ONE-ANSWER":
+        question = models.OneAnswer(
+            question_input.title, question_input.description, question_input.answer
+        )
+        question_id = InMemoryDatabase.create_question(question)
         return Response(
             dumps(
                 {
-                    "id": question.id,
+                    "id": question_id,
                     "title": question.title,
                     "description": question.description,
-                    "type": question_type,
+                    "type": "ONE-ANSWER",
                     "answer": question.answer,
                 }
             ),
             status=HTTPStatus.OK,
-            mimetype="application/json",
+            content_type="application/json",
         )
-
-    elif question_type == "MULTIPLE-CHOICE":
-        choices = data["choices"]
-        answer = data["answer"]
-        if not models.MultipyChoice.is_valid(answer, choices):
-            return Response(status=HTTPStatus.BAD_REQUEST)
+    elif data["type"] == "MULTIPLE-CHOICE":
         question = models.MultipyChoice(
-            question_id, title, description, choices, answer
+            question_input.title,
+            question_input.description,
+            question_input.choices,
+            question_input.answer,
         )
-        QUESTIONS.append(question)
+        question_id = InMemoryDatabase.create_question(question)
         return Response(
             dumps(
                 {
-                    "id": question.id,
+                    "id": question_id,
                     "title": question.title,
                     "description": question.description,
-                    "type": question_type,
+                    "type": "MULTIPLE-CHOICE",
                     "choices": question.choices,
                     "answer": question.answer,
                 }
             ),
             status=HTTPStatus.OK,
-            mimetype="application/json",
+            content_type="application/json",
         )
-
     else:
-        return Response("Недопустимый тип вопроса", status=HTTPStatus.BAD_REQUEST)
+        return Response(
+            "Нельзя сгенерировать такой тип вопроса", status=HTTPStatus.BAD_REQUEST
+        )
 
 
 @app.get("/questions/random")
 def random_quest():
-    if len(QUESTIONS) == 0:
-        return Response("There not questions", status=HTTPStatus.NOT_FOUND)
-    quest_id = random.randint(0, len(QUESTIONS) - 1)
-    question = QUESTIONS[quest_id]
+    question_id = InMemoryDatabase.get_random_quest_id()
+    question = InMemoryDatabase.get_question(question_id)
     return Response(
         dumps(
             {
-                "id": question.id,
+                "id": question_id,
                 "reward": question.reward,
             }
         ),
         status=HTTPStatus.OK,
-        mimetype="application/json",
+        content_type="application/json",
     )
 
 
@@ -84,34 +81,30 @@ def solve_quest(question_id):
     data = request.get_json()
     user_id = data["user_id"]
     user_answer = data["user_answer"]
+    user = InMemoryDatabase.get_user(user_id)
+    question = InMemoryDatabase.get_question(question_id)
+    result = AnswerChecker.check_question_answer(question, user, user_answer)
 
-    try:
-        question = QUESTIONS[question_id]
-        user = USERS[user_id]
-    except IndexError:
-        return Response(
-            "Неправильный индекс у пользователя или вопроса",
-            status=HTTPStatus.BAD_REQUEST,
-        )
+    data_to_history = {
+        "title": question.title,
+        "description": question.description,
+        "type": question.type,
+        "answer": question.answer,
+        "user_answer": user_answer,
+        "reward": result["reward"],
+    }
 
-    user.add_to_history(question.to_dict(), user_answer)
-
-    if question.answer == user_answer:
-        user.increase_score(question.reward)
-        result = "Correct"
-        reward = question.reward
-    else:
-        result = "Wrong"
-        reward = 0
+    UserHistory.add_question_to_history(
+        user_id, data_to_history
+    )
 
     return Response(
         dumps(
             {
-                "question_id": question.id,
-                "result": result,
-                "reward": reward,
+                "question_id": question_id,
+                **result,
             }
         ),
         status=HTTPStatus.OK,
-        mimetype='application/json'
+        mimetype="application/json",
     )

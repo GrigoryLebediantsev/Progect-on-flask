@@ -1,58 +1,44 @@
-from app.models.expressions import Expression
-from app import app, USERS, EXPRS
+from pydantic import ValidationError
+from app.services.answer_checker import AnswerChecker
+from app.adapter.in_memory import InMemoryDatabase
+from app.dto.expressions import GenerateExpressionInput
+from app import app
 from flask import request, Response
 from http import HTTPStatus
 from json import dumps
-import random
+from app.services.expression_servise import ExpressionServise
 
 
 @app.get("/math/expression")
-def generate_expr():
-    data = request.get_json()
-    expr_id = len(EXPRS)
-    count_nums = data["count_nums"]
-    operation = Expression.choose_operation(data["operation"])
-
-    if not Expression.validate_expression_params(count_nums, operation):
-        return Response(
-            "Более двух операций поддерживаются только для умножения, возведения в степень и сложения",
-            status=HTTPStatus.BAD_REQUEST,
-        )
-
-    min_num = data["min"]
-    max_num = data["max"]
-    values = [random.randint(min_num, max_num) for _ in range(count_nums)]
-
+def generate_expr() -> Response:    # ok
     try:
-        expression = Expression(expr_id, operation, *values)
-    except ValueError as e:
+        expression_input = GenerateExpressionInput(**request.get_json())
+    except ValidationError as e:
         return Response(str(e), status=HTTPStatus.BAD_REQUEST)
 
-    EXPRS.append(expression)
+    expression, expression_id = ExpressionServise.create_expression(expression_input)
 
     return Response(
-        dumps({"id": expression.id, "values": values}),
+        dumps({"id": expression_id, "values": expression.values}),
         HTTPStatus.OK,
         mimetype="application/json",
     )
 
 
-@app.get("/math/<int:expr_id>")
-def get_expr(expr_id):
+@app.get("/math/<int:expression_id>")  # ok
+def get_expr(expression_id: int) -> Response:
 
     try:
-        expression = EXPRS[expr_id]
-    except IndexError:
+        expression = InMemoryDatabase.get_expression(expression_id)
+    except KeyError:
         return Response(
-            "Не найдено выражения с таким id", status=HTTPStatus.BAD_REQUEST
+            "Не существует выражения с таким id", status=HTTPStatus.NOT_FOUND
         )
-    except ValueError:
-        return Response("Некорректный тип данных для id", status=HTTPStatus.BAD_REQUEST)
 
     return Response(
         dumps(
             {
-                "id": expression.id,
+                "id": expression_id,
                 "values": expression.values,
                 "operation": expression.operation,
             }
@@ -62,39 +48,17 @@ def get_expr(expr_id):
     )
 
 
-@app.post("/math/<int:expr_id>/solve")
-def solve_expr(expr_id):
+@app.post("/math/<int:expression_id>/solve")
+def solve_expr(expression_id: int) -> Response:
+
     data = request.get_json()
     user_id = data["user_id"]
     user_answer = data["user_answer"]
 
-    try:
-        expression = EXPRS[expr_id]
-    except IndexError:
-        return Response(
-            "Не существует выражения с таким id", status=HTTPStatus.BAD_REQUEST
-        )
-
-    try:
-        user = USERS[user_id]
-    except IndexError:
-        return Response(
-            "Не существует пользователя с таким id", status=HTTPStatus.BAD_REQUEST
-        )
-
-    result = expression.check_answer(user_answer)
-
-    user.add_to_history(expression.to_dict(), user_answer)  # Очень не нравится этот момент
-
-    if result == "correct":
-        user.increase_score(expression.reward)
-        reward = expression.reward
-    else:
-        reward = 0
-
+    result, reward = AnswerChecker.check_expression_answer(expression_id, user_id, user_answer)
 
     return Response(
-        dumps({"expr_id": expr_id, "resault": result, "reward": reward}),
+        dumps({"expr_id": expression_id, "result": result, "reward": reward}),
         status=HTTPStatus.OK,
         mimetype="application/json",
     )

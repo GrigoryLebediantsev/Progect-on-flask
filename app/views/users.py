@@ -1,28 +1,33 @@
-from app import app, USERS, models
+from app.models import User
+from app import app
 from flask import request, Response
 from http import HTTPStatus
 from json import dumps
+from app.dto.users import GenerateUserInput
+from app.adapter.in_memory import InMemoryDatabase
+from app.adapter.history import UserHistory
 
 
 @app.post("/user/create")
-def user_create():
-    data = request.get_json() or {}
-    user_id = len(USERS)
-    first_name = data.get("first_name")
-    last_name = data.get("last_name")
-    phone = data.get("phone")
-    email = data.get("email")
+def user_create() -> Response:
+    data = request.get_json()
 
-    try:
-        user = models.User(user_id, first_name, last_name, phone, email)
-    except ValueError as e:
-        return Response(str(e), status=HTTPStatus.BAD_REQUEST)
+    user_input = GenerateUserInput(**data)
+    user = User(
+        first_name=user_input.first_name,
+        last_name=user_input.last_name,
+        phone=user_input.phone,
+        email=user_input.email,
+        score=user_input.score,
+    )
+    user_id = InMemoryDatabase.create_user(user)
 
-    USERS.append(user)
-    response = Response(
+    UserHistory.create_user_history(user_id)
+
+    return Response(
         dumps(
             {
-                "id": user.id,
+                "id": user_id,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "phone": user.phone,
@@ -33,31 +38,18 @@ def user_create():
         HTTPStatus.OK,
         mimetype="application/json",
     )
-    return response
 
 
 @app.get("/user/<int:user_id>/")
-def get_user(user_id):
-
-    if user_id < 0 or user_id >= len(USERS):
-        return Response(
-            "Не найдено пользователя с таким id", status=HTTPStatus.NOT_FOUND
-        )
+def get_user(user_id: int) -> Response:
     try:
-        user = USERS[user_id]
-    except IndexError:
-        return Response(
-            "Не найдено пользователя с таким id", status=HTTPStatus.NOT_FOUND
-        )
-    except ValueError:
-        return Response(
-            "Не найдено пользователя с таким id", status=HTTPStatus.NOT_FOUND
-        )
-
+        user = InMemoryDatabase.get_user(user_id)
+    except KeyError:
+        return Response("Нету пользователя с таким id", status=HTTPStatus.NOT_FOUND)
     return Response(
         dumps(
             {
-                "id": user.id,
+                "id": user_id,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "phone": user.phone,
@@ -71,16 +63,12 @@ def get_user(user_id):
 
 
 @app.get("/users/<int:user_id>/history")
-def get_history(user_id):
+def get_history(user_id: int) -> Response:
 
-    try:
-        user = USERS[user_id]
-    except IndexError:
-        return Response("Нету пользователя с таким id", status=HTTPStatus.BAD_REQUEST)
+    user_history = UserHistory.get_user_history(user_id)
 
-    print(user.history)
-    return Response(dumps({"history": user.history}), status=HTTPStatus.OK, mimetype='application/json')
-
-
-
-
+    return Response(
+        dumps(user_history),
+        status=HTTPStatus.OK,
+        mimetype="application/json",
+    )
