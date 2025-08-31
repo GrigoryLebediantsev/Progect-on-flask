@@ -1,6 +1,5 @@
 from typing import Protocol
-from app.models.expressions import Expression
-from app.models.users import User
+from app.models import Expression, User
 
 
 class DatabaseInterface(Protocol):

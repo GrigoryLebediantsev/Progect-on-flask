@@ -1,10 +1,11 @@
+from app.dto import GenerateUserInput
+from app.adapter import InMemoryDatabase, UserHistory
+from app.models import User
+
 from typing import Any
 import matplotlib
+
 matplotlib.use("Agg")
-from app.dto.users import GenerateUserInput
-from app.adapter.in_memory import InMemoryDatabase
-from app.adapter.history import UserHistory
-from app.models.users import User
 from matplotlib import pyplot as plt
 from io import BytesIO
 
@@ -36,8 +37,6 @@ class UserService:
     @staticmethod
     def create_graph_leaderboard():
         all_users = InMemoryDatabase.get_all_users()
-
-
 
         users_names = [
             user.first_name + " " + user.last_name + "\n id:" + str(user.id)

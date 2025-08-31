@@ -1,13 +1,13 @@
-from pydantic import ValidationError
-from app.services.answer_checker import AnswerChecker
-from app.adapter.in_memory import InMemoryDatabase
-from app.dto.expressions import GenerateExpressionInput
+from app.services import AnswerChecker, ExpressionServise
+from app.adapter import InMemoryDatabase
+from app.dto import GenerateExpressionInput, SolveExpressionInput
+
 from app import app
-from app.dto.expression_solve import SolveExpressionInput
+
 from flask import request, Response
 from http import HTTPStatus
 from json import dumps
-from app.services.expression_servise import ExpressionServise
+from pydantic import ValidationError
 
 
 @app.get("/math/expression")

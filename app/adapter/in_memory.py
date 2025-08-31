@@ -1,7 +1,5 @@
 import random
-from app.models import Question
-from app.models.expressions import Expression
-from app.models.users import User
+from app.models import Question, Expression, User
 
 _USERS = {}
 _users_id_counter = 0

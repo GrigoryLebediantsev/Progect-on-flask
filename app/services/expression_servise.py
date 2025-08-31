@@ -1,8 +1,6 @@
-from app.models.expressions import Expression
-from app.models.users import User
+from app.models import Expression, User
 from app.dto.expressions import GenerateExpressionInput
-from app.adapter.in_memory import InMemoryDatabase
-from app.adapter.history import UserHistory
+from app.adapter import InMemoryDatabase, UserHistory
 
 
 class ExpressionServise:
@@ -18,8 +16,9 @@ class ExpressionServise:
         return expression
 
     @staticmethod
-    def add_expression_answer_to_history(expression: Expression, user: User, user_answer: int,
-                                  result: str, reward: int) -> None:
+    def add_expression_answer_to_history(
+        expression: Expression, user: User, user_answer: int, result: str, reward: int
+    ) -> None:
 
         data_to_history = {
             "id": expression.id,
@@ -31,4 +30,3 @@ class ExpressionServise:
             "reward": reward,
         }
         UserHistory.add_to_user_history(user.id, data_to_history)
-

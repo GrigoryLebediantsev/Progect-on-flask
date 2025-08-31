@@ -1,8 +1,6 @@
-from app.adapter.in_memory import InMemoryDatabase
-from app.services.expression_servise import ExpressionServise
-from app.dto.expression_solve import SolveExpressionInput
-from app.dto.question_solve import SolveQuestionInput
-from app.services.question_servise import QuestionServise
+from app.adapter import InMemoryDatabase
+from app.services import ExpressionServise, QuestionServise
+from app.dto import SolveExpressionInput, SolveQuestionInput
 
 
 class AnswerChecker:
@@ -44,6 +42,8 @@ class AnswerChecker:
         else:
             reward = 0
 
-        QuestionServise.add_question_answer_to_history(question, input_dto.user_id, input_dto.user_answer, result, reward)
+        QuestionServise.add_question_answer_to_history(
+            question, input_dto.user_id, input_dto.user_answer, result, reward
+        )
 
         return result, reward

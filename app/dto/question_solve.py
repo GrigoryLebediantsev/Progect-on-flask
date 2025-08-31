@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
-from app.adapter.in_memory import InMemoryDatabase
+from app.adapter import InMemoryDatabase
 
 
 class SolveQuestionInput(BaseModel):

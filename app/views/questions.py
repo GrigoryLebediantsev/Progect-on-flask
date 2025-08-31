@@ -1,13 +1,14 @@
-from pydantic import ValidationError
+from app.services import AnswerChecker, QuestionServise
+from app.adapter import InMemoryDatabase
+from app.dto import GenerateQuestionInput, SolveQuestionInput
+
 from app import app
+
+from pydantic import ValidationError
 from flask import request, Response
 from http import HTTPStatus
 from json import dumps
-from app.services.answer_checker import AnswerChecker
-from app.adapter.in_memory import InMemoryDatabase
-from app.dto.questions import GenerateQuestionInput
-from app.services.question_servise import QuestionServise
-from app.dto.question_solve import SolveQuestionInput
+
 
 
 @app.post("/questions/create")

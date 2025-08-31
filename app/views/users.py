@@ -1,13 +1,14 @@
-from pydantic import ValidationError
+from app.dto import GenerateUserInput
+from app.adapter import InMemoryDatabase, UserHistory
+from app.services import UserService
 
 from app import app
+
+from pydantic import ValidationError
 from flask import request, Response
 from http import HTTPStatus
 from json import dumps
-from app.dto.users import GenerateUserInput
-from app.adapter.in_memory import InMemoryDatabase
-from app.adapter.history import UserHistory
-from app.services.user_servise import UserService
+
 
 
 @app.post("/users/create")
