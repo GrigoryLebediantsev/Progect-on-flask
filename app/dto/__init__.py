@@ -1,5 +1,3 @@
-__all__ = ("GenerateExpressionInput", "GenerateUserInput", "GenerateQuestionInput")
+__all__ = ("expression_solve", "expressions", "question_solve", "questions")
 
-from .expressions import GenerateExpressionInput
-from .users import GenerateUserInput
-from .questions import GenerateQuestionInput
+from . import expression_solve, expressions, question_solve, questions

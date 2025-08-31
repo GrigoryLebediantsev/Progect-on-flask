@@ -1,4 +1,5 @@
 from pydantic import EmailStr
+from typing import Optional
 
 
 class User:
@@ -11,21 +12,14 @@ class User:
         self.phone = phone
         self.email = email
         self.score = score
+        self.id: Optional[int] = None
 
     def increase_score(self, amount: int):
         self.score += amount
 
-    # def __repr__(self) -> str:
-    #     return f"{self.id}) {self.first_name} {self.last_name}"
-    #
-    # def __lt__(self, other):
-    #     return self.score < other.score
-    #
-    # def to_dict(self) -> dict:
-    #     return dict(
-    #         {
-    #             "first_name": self.first_name,
-    #             "last_name": self.last_name,
-    #             "score": self.score,
-    #         }
-    #     )
+    def add_id_from_memory(self, id: int) -> None:
+        self.id = id
+
+    def __lt__(self, other) -> bool:
+        return self.score < other.score
+

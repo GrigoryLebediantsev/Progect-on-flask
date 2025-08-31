@@ -1,20 +1,18 @@
-from app.models.users import User
-from app.models.questions import Question
 from app.adapter.in_memory import InMemoryDatabase
 from app.services.expression_servise import ExpressionServise
-from app.adapter.history import UserHistory
+from app.dto.expression_solve import SolveExpressionInput
+from app.dto.question_solve import SolveQuestionInput
+from app.services.question_servise import QuestionServise
 
 
 class AnswerChecker:
     @staticmethod
-    def check_expression_answer(
-        expression_id: int, user_id: int, user_answer: int
-    ) -> tuple[str, int]:
+    def check_expression_answer(input_dto: SolveExpressionInput) -> tuple[str, int]:
 
-        expression = InMemoryDatabase.get_expression(expression_id)
-        user = InMemoryDatabase.get_user(user_id)
+        expression = InMemoryDatabase.get_expression(input_dto.expression_id)
+        user = InMemoryDatabase.get_user(input_dto.user_id)
 
-        result = expression.check_answer(user_answer)
+        result = expression.check_answer(input_dto.user_answer)
 
         if result == "correct":
             user.increase_score(expression.reward)
@@ -23,15 +21,29 @@ class AnswerChecker:
             reward = 0
 
         ExpressionServise.add_expression_answer_to_history(
-            expression_id, user_id, user_answer, result, reward #Добавить баллы
+            expression,
+            user,
+            input_dto.user_answer,
+            result,
+            reward,
         )
 
         return result, reward
 
     @staticmethod
-    def check_question_answer(question: Question, user: User, user_answer: str) -> dict:
-        if question.answer == user_answer:
+    def check_question_answer(input_dto: SolveQuestionInput):
+
+        question = InMemoryDatabase.get_question(input_dto.question_id)
+        user = InMemoryDatabase.get_user(input_dto.user_id)
+
+        result = question.check_answer(input_dto.user_answer)
+
+        if result == "correct":
             user.increase_score(question.reward)
-            return {"result": "correct", "reward": question.reward}
+            reward = question.reward
         else:
-            return {"result": "wrong", "reward": 0}
+            reward = 0
+
+        QuestionServise.add_question_answer_to_history(question, input_dto.user_id, input_dto.user_answer, result, reward)
+
+        return result, reward

@@ -1,5 +1,3 @@
-__all__ = ("User", "Expression", "Question", "OneAnswer", "MultipyChoice")
+__all__ = ("users", "expressions", "questions")
 
-from .users import User
-from .expressions import Expression
-from .questions import Question, OneAnswer, MultipyChoice
+from . import users, expressions, questions

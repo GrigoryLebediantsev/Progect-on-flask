@@ -1,7 +1,4 @@
-from flask import Flask
+__all__ = ("views", "models", "services", "dto", "adapter")
 
-app = Flask(__name__)
+from . import views, models, services, dto, adapter
 
-from app import views
-from app import models
-from app.views import views_all

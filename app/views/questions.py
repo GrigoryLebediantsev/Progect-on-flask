@@ -1,67 +1,33 @@
-from app import app, models
+from pydantic import ValidationError
+from app import app
 from flask import request, Response
 from http import HTTPStatus
 from json import dumps
 from app.services.answer_checker import AnswerChecker
 from app.adapter.in_memory import InMemoryDatabase
 from app.dto.questions import GenerateQuestionInput
-from app.adapter.history import UserHistory
+from app.services.question_servise import QuestionServise
+from app.dto.question_solve import SolveQuestionInput
 
 
 @app.post("/questions/create")
 def create_question():
     data = request.get_json()
 
-    question_input = GenerateQuestionInput(**data)
+    try:
+        question_input = GenerateQuestionInput(**data)
+    except ValidationError as e:
+        return Response(str(e), status=HTTPStatus.BAD_REQUEST)
 
-    if data["type"] == "ONE-ANSWER":
-        question = models.OneAnswer(
-            question_input.title, question_input.description, question_input.answer
-        )
-        question_id = InMemoryDatabase.create_question(question)
-        return Response(
-            dumps(
-                {
-                    "id": question_id,
-                    "title": question.title,
-                    "description": question.description,
-                    "type": "ONE-ANSWER",
-                    "answer": question.answer,
-                }
-            ),
-            status=HTTPStatus.OK,
-            content_type="application/json",
-        )
-    elif data["type"] == "MULTIPLE-CHOICE":
-        question = models.MultipyChoice(
-            question_input.title,
-            question_input.description,
-            question_input.choices,
-            question_input.answer,
-        )
-        question_id = InMemoryDatabase.create_question(question)
-        return Response(
-            dumps(
-                {
-                    "id": question_id,
-                    "title": question.title,
-                    "description": question.description,
-                    "type": "MULTIPLE-CHOICE",
-                    "choices": question.choices,
-                    "answer": question.answer,
-                }
-            ),
-            status=HTTPStatus.OK,
-            content_type="application/json",
-        )
-    else:
-        return Response(
-            "Нельзя сгенерировать такой тип вопроса", status=HTTPStatus.BAD_REQUEST
-        )
+    question = QuestionServise.create_question(question_input)
+    question_output = question.to_dict(question_id=question.id)
+
+    return Response(dumps(question_output), status=HTTPStatus.OK, content_type="application/json")
+
 
 
 @app.get("/questions/random")
-def random_quest():
+def random_quest(): # todo добавить проверку на  существование вопросов в целом
     question_id = InMemoryDatabase.get_random_quest_id()
     question = InMemoryDatabase.get_question(question_id)
     return Response(
@@ -79,30 +45,17 @@ def random_quest():
 @app.post("/questions/<int:question_id>/solve")
 def solve_quest(question_id):
     data = request.get_json()
-    user_id = data["user_id"]
-    user_answer = data["user_answer"]
-    user = InMemoryDatabase.get_user(user_id)
-    question = InMemoryDatabase.get_question(question_id)
-    result = AnswerChecker.check_question_answer(question, user, user_answer)
 
-    data_to_history = {
-        "title": question.title,
-        "description": question.description,
-        "type": question.type,
-        "answer": question.answer,
-        "user_answer": user_answer,
-        "reward": result["reward"],
-    }
+    input_dto = SolveQuestionInput(**data, question_id=question_id)
 
-    UserHistory.add_question_to_history(
-        user_id, data_to_history
-    )
+    result, reward = AnswerChecker.check_question_answer(input_dto)
 
     return Response(
         dumps(
             {
                 "question_id": question_id,
-                **result,
+                "result": result,
+                "reward": reward,
             }
         ),
         status=HTTPStatus.OK,

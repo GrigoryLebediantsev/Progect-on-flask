@@ -1,4 +1,3 @@
-__all__ = ("UserHistory", "InMemoryDatabase")
+__all__ = ("history", "in_memory", "interface")
 
-from .history import UserHistory
-from .in_memory import InMemoryDatabase
+from . import history, in_memory, interface

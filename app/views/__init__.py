@@ -1,1 +1,3 @@
-from app.views import users, expressions, questions
+__all__ = ("users", "expressions", "questions", "views_all")
+
+from . import users, expressions, questions, views_all

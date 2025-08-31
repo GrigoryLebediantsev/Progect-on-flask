@@ -3,6 +3,7 @@ from app.services.answer_checker import AnswerChecker
 from app.adapter.in_memory import InMemoryDatabase
 from app.dto.expressions import GenerateExpressionInput
 from app import app
+from app.dto.expression_solve import SolveExpressionInput
 from flask import request, Response
 from http import HTTPStatus
 from json import dumps
@@ -16,10 +17,10 @@ def generate_expr() -> Response:    # ok
     except ValidationError as e:
         return Response(str(e), status=HTTPStatus.BAD_REQUEST)
 
-    expression, expression_id = ExpressionServise.create_expression(expression_input)
+    expression = ExpressionServise.create_expression(expression_input)
 
     return Response(
-        dumps({"id": expression_id, "values": expression.values}),
+        dumps({"id": expression.id, "values": expression.values}),
         HTTPStatus.OK,
         mimetype="application/json",
     )
@@ -52,10 +53,13 @@ def get_expr(expression_id: int) -> Response:
 def solve_expr(expression_id: int) -> Response:
 
     data = request.get_json()
-    user_id = data["user_id"]
-    user_answer = data["user_answer"]
 
-    result, reward = AnswerChecker.check_expression_answer(expression_id, user_id, user_answer)
+    try:
+        input_dto = SolveExpressionInput(**data, expression_id=expression_id)
+    except ValidationError as e:
+        return Response(str(e), status=HTTPStatus.BAD_REQUEST)
+
+    result, reward = AnswerChecker.check_expression_answer(input_dto)
 
     return Response(
         dumps({"expr_id": expression_id, "result": result, "reward": reward}),

@@ -1,5 +1,3 @@
-from app.adapter.in_memory import InMemoryDatabase
-
 _HISTORY_ALL_USERS: dict[int, dict] = {}
 
 

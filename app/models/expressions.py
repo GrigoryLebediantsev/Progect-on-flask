@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class Expression:
 
     def __init__(self, operation: str, values: list, reward: int):
@@ -6,6 +9,7 @@ class Expression:
         self.values = values
         self.answer = self._evaluate()
         self.reward = reward
+        self.id: Optional[int] = None
 
     def _evaluate(self) -> str:     #todo correct output type
         return eval(self._to_str)
@@ -20,3 +24,6 @@ class Expression:
         if user_answer == self.answer:
             return "correct"
         return "wrong"
+
+    def add_id_from_memory(self, id: int) -> None:
+        self.id = id

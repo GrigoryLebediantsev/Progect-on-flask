@@ -1,4 +1,4 @@
-from pydantic import BaseModel, computed_field, model_validator
+from pydantic import BaseModel, model_validator
 
 class GenerateQuestionInput(BaseModel):
     title: str
