@@ -10,7 +10,6 @@ from http import HTTPStatus
 from json import dumps
 
 
-
 @app.post("/users/create")
 def user_create() -> Response:
     data = request.get_json()
@@ -63,13 +62,16 @@ def get_history(user_id: int) -> Response:
     try:
         user_history = UserHistory.get_user_history(user_id)
     except KeyError:
-        return Response("Не существует пользователя с таким id", status=HTTPStatus.NOT_FOUND)
+        return Response(
+            "Не существует пользователя с таким id", status=HTTPStatus.NOT_FOUND
+        )
 
     return Response(
         dumps(user_history),
         status=HTTPStatus.OK,
         mimetype="application/json",
     )
+
 
 @app.get("/users/leaderboard")
 def get_user_leaderboard() -> Response:
@@ -79,6 +81,8 @@ def get_user_leaderboard() -> Response:
     except ValueError as e:
         return Response(str(e), status=HTTPStatus.BAD_REQUEST)
     if leaderboard_type == "table":
-        return Response(dumps(response_data), status=HTTPStatus.OK, content_type="application/json")
+        return Response(
+            dumps(response_data), status=HTTPStatus.OK, content_type="application/json"
+        )
     else:
         return Response(response_data, status=HTTPStatus.OK, content_type="image/png")
