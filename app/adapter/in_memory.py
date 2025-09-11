@@ -1,8 +1,16 @@
 import random
-from app.models import Question, Expression, User
+from app.models import QuestionInterface, Expression, User
+from app.exceptions import (
+    UserNotFoundError,
+    HistoryNotFoundError,
+    ExpressionNotFoundError,
+    QuestionNotFoundError,
+)
 
 _USERS = {}
 _users_id_counter = 0
+
+_HISTORY_ALL_USERS: dict[int, dict] = {}
 
 _EXPRS: dict = {}
 _exprs_id_counter: int = 0
@@ -15,85 +23,73 @@ class InMemoryDatabase:
 
     @staticmethod
     def add_user(user: User) -> None:
-        """Сохраняет пользователя. Возвращает ID пользователя."""
         global _users_id_counter, _USERS
         _USERS[_users_id_counter] = user
-        user.add_id_from_memory(_users_id_counter)
+        user.id = _users_id_counter
         _users_id_counter += 1
 
     @staticmethod
     def get_user(user_id: int) -> User:
-        """Возвращает пользователя по ID."""
-        try:
-            return _USERS[user_id]
-        except IndexError:
-            raise ValueError("Неверный ID")
+        if user_id not in _USERS:
+            raise UserNotFoundError(f"Пользователь {user_id} не найден")
+        return _USERS[user_id]
 
     @staticmethod
     def get_all_users() -> list:
+        if not _USERS:
+            raise UserNotFoundError(
+                "В базе данных не обнаружено ни одного пользователя"
+            )
         return [_USERS[user_id] for user_id in _USERS]
 
     @staticmethod
-    def user_in_memory(user_id):
-        try:
-            InMemoryDatabase.get_user(user_id)
-        except KeyError:
-            return False
-        return True
+    def create_user_history(user_id: int) -> None:
+        _HISTORY_ALL_USERS[user_id] = {"history": []}
+
+    @staticmethod
+    def get_user_history(user_id: int) -> dict:
+        if user_id not in _HISTORY_ALL_USERS:
+            raise HistoryNotFoundError(f"История для пользователя {user_id} не найдена")
+        return _HISTORY_ALL_USERS[user_id]
+
+    @staticmethod
+    def add_to_user_history(user_id: int, data_to_history: dict) -> None:
+        if user_id not in _HISTORY_ALL_USERS:
+            raise HistoryNotFoundError(f"История для пользователя {user_id} не найдена")
+        _HISTORY_ALL_USERS[user_id]["history"].append(data_to_history)
 
     @staticmethod
     def add_expression(expression: Expression) -> None:
-        """Сохраняет задание. Возвращает ID задания."""
         global _exprs_id_counter, _EXPRS
 
         _EXPRS[_exprs_id_counter] = expression
-        expression.add_id_from_memory(_exprs_id_counter)
+        expression.id = _exprs_id_counter
         _exprs_id_counter += 1
 
     @staticmethod
     def get_expression(expression_id: int) -> Expression:
-        """Возвращает задание по ID."""
-        try:
-            return _EXPRS[expression_id]
-        except IndexError:
-            raise ValueError("Неверный ID")
+        if not expression_id in _USERS:
+            raise ExpressionNotFoundError(f"Выражение {expression_id} не найдено")
+        return _EXPRS[expression_id]
 
     @staticmethod
-    def expression_in_memory(expression_id: int) -> bool:
-        try:
-            InMemoryDatabase.get_expression(expression_id)
-        except KeyError:
-            return False
-        return True
-
-    @staticmethod
-    def add_question(question: Question) -> None:
-        """Сохраняет вопрос. Возвращает ID вопроса."""
+    def add_question(question: QuestionInterface) -> None:
         global _quests_id_counter, _QUESTS
 
         _QUESTS[_quests_id_counter] = question
-        question.add_id_from_memory(_quests_id_counter)
+        question.id = _quests_id_counter
         _quests_id_counter += 1
 
     @staticmethod
-    def get_question(question_id: int) -> Question:
-        """Возвращает вопрос по ID."""
-        try:
-            return _QUESTS[question_id]
-        except IndexError:
-            raise ValueError("Неверный ID")
+    def get_question(question_id: int) -> QuestionInterface:
+        if not question_id in _QUESTS:
+            raise QuestionNotFoundError(f"Вопрос {question_id} не найден")
+        return _QUESTS[question_id]
 
     @staticmethod
-    def question_in_memory(question_id: int) -> bool:
-        try:
-            InMemoryDatabase.get_question(question_id)
-        except KeyError:
-            return False
-        return True
-
-    @staticmethod
-    def get_random_quest_id() -> int:
-        """Возвращает ID случайного вопроса"""
+    def get_random_question() -> QuestionInterface:
+        if len(_QUESTS) == 0:
+            raise QuestionNotFoundError("В базе данных не обнаружено ни одного вопроса")
         random_quest_id = random.randint(0, len(_QUESTS) - 1)
-        return random_quest_id
-
+        random_question = InMemoryDatabase.get_question(random_quest_id)
+        return random_question

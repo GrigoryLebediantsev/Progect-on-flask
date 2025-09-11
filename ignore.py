@@ -1,14 +1,26 @@
-from faker import Faker
+from pydantic import BaseModel, model_validator
+from enum import Enum
+from typing import Self, Optional
 
-faker = Faker("ru_RU")
+
+class QuestionType(Enum):
+    ONE_ANSWER = "ONE-ANSWER"
+    MULTIPLE_CHOICE = "MULTIPLE-CHOICE"
 
 
-def create_random_payload():
-    return {
-        "first_name": faker.first_name(),
-        "last_name": faker.last_name(),
-        "phone": faker.phone_number(),
-        "email": faker.email()
-    }
 
-print(create_random_payload())
+class GenerateQuestionInput(BaseModel):
+    title: str
+    description: str
+    type: QuestionType
+
+class MultipleChoiceQuestionInput(GenerateQuestionInput):
+    choices: Optional[list[str]]
+    answer: int
+
+class OneAnswerQuestionInput(GenerateQuestionInput):
+    answer: str
+
+
+
+

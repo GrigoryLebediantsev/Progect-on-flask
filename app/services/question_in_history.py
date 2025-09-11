@@ -1,42 +1,20 @@
-from app.models import Question, OneAnswer, MultipyChoice
-from app.dto import GenerateQuestionInput
-from app.adapter import InMemoryDatabase, UserHistory
+from app.models import QuestionInterface, OneAnswerQuestion, MultipleChoiceQuestion
+from app.dto import QuestionType
+from app.adapter import InMemoryDatabase
 
 
-class QuestionServise:
-
-    @staticmethod
-    def create_question(question_input: GenerateQuestionInput) -> Question:
-
-        if question_input.type == "ONE-ANSWER":
-            question = OneAnswer(
-                title=question_input.title,
-                description=question_input.description,
-                answer=question_input.answer,
-            )
-        else:
-            question = MultipyChoice(
-                title=question_input.title,
-                description=question_input.description,
-                answer=question_input.answer,
-                choices=question_input.choices,
-            )
-
-        InMemoryDatabase.add_question(question=question)
-
-        return question
-
+class QuestionInMemory:
     @classmethod
     def add_question_answer_to_history(
         cls,
-        question: Question,
+        question: QuestionInterface,
         user_id: int,
         user_answer: int,
         result: str,
         reward: int,
     ) -> None:
 
-        if question.type == "ONE-ANSWER":
+        if question.type == QuestionType.ONE_ANSWER:
             data_to_history = cls.create_one_answer_data(
                 question, user_answer, result, reward
             )
@@ -45,11 +23,11 @@ class QuestionServise:
                 question, user_answer, result, reward
             )
 
-        UserHistory.add_to_user_history(user_id, data_to_history)
+        InMemoryDatabase.add_to_user_history(user_id, data_to_history)
 
     @staticmethod
     def create_one_answer_data(
-        question: Question, user_answer: int, result: str, reward: int
+        question: OneAnswerQuestion, user_answer: int, result: str, reward: int
     ) -> dict:
 
         data = {
@@ -66,7 +44,7 @@ class QuestionServise:
 
     @staticmethod
     def create_multiple_choice_data(
-        question: Question, user_answer: int, result: str, reward: int
+        question: MultipleChoiceQuestion, user_answer: int, result: str, reward: int
     ) -> dict:
         data = {
             "id": question.id,

@@ -1,7 +1,5 @@
-from app.dto import GenerateUserInput
-from app.adapter import InMemoryDatabase, UserHistory
-from app.models import User
-
+from app.adapter import InMemoryDatabase
+from app.dto import LeaderboardType
 from typing import Any
 import matplotlib
 
@@ -10,16 +8,7 @@ from matplotlib import pyplot as plt
 from io import BytesIO
 
 
-class UserService:
-
-    @staticmethod
-    def create_user(user_input: GenerateUserInput) -> User:
-
-        user = User(**user_input.model_dump())
-        InMemoryDatabase.add_user(user)
-        UserHistory.create_user_history(user.id)
-
-        return user
+class LeaderboardGenerator:
 
     @staticmethod
     def create_table_leaderboard() -> Any:
@@ -47,7 +36,6 @@ class UserService:
         fig, ax = plt.subplots(figsize=(10, 6))
         plt.xticks(rotation=45)
         if all_users:
-            # ax.set_xlim()
             ax.set_ylim(bottom=0, top=(max(users_scores) + 1))
         ax.bar(x=users_names, height=users_scores)
         plt.tight_layout()
@@ -59,9 +47,7 @@ class UserService:
 
     @classmethod
     def create_leaderboard(cls, leaderboard_type: str) -> Any:
-        if leaderboard_type == "table":
+        if leaderboard_type == LeaderboardType.TABLE:
             return cls.create_table_leaderboard()
-        elif leaderboard_type == "graph":
-            return cls.create_graph_leaderboard()
         else:
-            raise ValueError("Не корректная информация типа данных")
+            return cls.create_graph_leaderboard()

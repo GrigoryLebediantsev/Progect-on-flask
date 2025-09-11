@@ -1,6 +1,6 @@
-from app.dto import GenerateUserInput
-from app.adapter import InMemoryDatabase, UserHistory
-from app.services import UserService
+from app import dto
+from app.adapter import InMemoryDatabase
+from app.services import UserCreateService, LeaderboardGenerator
 
 from app import app
 
@@ -14,10 +14,17 @@ from json import dumps
 def user_create() -> Response:
     data = request.get_json()
     try:
-        user_input = GenerateUserInput(**data)
-    except ValidationError as e:
-        return Response(str(e), status=HTTPStatus.BAD_REQUEST)
-    user = UserService.create_user(user_input)
+        user_input = dto.GenerateUserInput(
+            first_name=data["first_name"],
+            last_name=data["last_name"],
+            phone=data["phone"],
+            email=data["email"],
+            score=data["score"],
+        )
+    except ValidationError:
+        return Response("Ошибка запроса", status=HTTPStatus.BAD_REQUEST)
+
+    user= UserCreateService.create_user(**user_input.model_dump())
 
     return Response(
         dumps(
@@ -40,7 +47,7 @@ def get_user(user_id: int) -> Response:
     try:
         user = InMemoryDatabase.get_user(user_id)
     except KeyError:
-        return Response("Нету пользователя с таким id", status=HTTPStatus.NOT_FOUND)
+        return Response("Пользователя с таким id не существует", status=HTTPStatus.NOT_FOUND)
     return Response(
         dumps(
             {
@@ -60,10 +67,10 @@ def get_user(user_id: int) -> Response:
 @app.get("/users/<int:user_id>/history")
 def get_history(user_id: int) -> Response:
     try:
-        user_history = UserHistory.get_user_history(user_id)
+        user_history = InMemoryDatabase.get_user_history(user_id)
     except KeyError:
         return Response(
-            "Не существует пользователя с таким id", status=HTTPStatus.NOT_FOUND
+            "Пользователя с таким id не существует", status=HTTPStatus.NOT_FOUND
         )
 
     return Response(
@@ -75,12 +82,15 @@ def get_history(user_id: int) -> Response:
 
 @app.get("/users/leaderboard")
 def get_user_leaderboard() -> Response:
-    leaderboard_type = request.get_json()["type"]
+    data = request.get_json()
     try:
-        response_data = UserService.create_leaderboard(leaderboard_type)
-    except ValueError as e:
-        return Response(str(e), status=HTTPStatus.BAD_REQUEST)
-    if leaderboard_type == "table":
+        leaderboard_input = dto.GenerateLeaderboardInput(type=data["type"])
+    except ValidationError:
+        return Response("Ошибка запроса", status=HTTPStatus.BAD_REQUEST)
+
+    response_data = LeaderboardGenerator.create_leaderboard(leaderboard_input.type)
+
+    if leaderboard_input.type == "table":
         return Response(
             dumps(response_data), status=HTTPStatus.OK, content_type="application/json"
         )

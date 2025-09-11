@@ -1,98 +1,77 @@
-from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Optional
+from typing import Protocol, Optional, TypeVar
+from app.dto import QuestionType
 
 T = TypeVar("T", str, int)
 
 
-class Question(ABC, Generic[T]):
-    def __init__(self, title: str, description: str, reward: int, type: str):
-        self.title = title
-        self.description = description
-        self.reward = reward
-        self.type = type
-        self.id: Optional[int] = None
-        self.choices: Optional[list[str]] = None
+class QuestionInterface[T](Protocol):
+    title: str
+    description: str
+    reward: int
+    type: QuestionType
+    id: Optional[int]
+    answer: T
 
-    @property
-    @abstractmethod
-    def answer(self) -> T:
-        ...
+    def to_dict(self) -> dict: ...
 
-    @abstractmethod
-    def to_dict(self, question_id: int) -> dict: ...
-
-    @abstractmethod
-    def check_answer(self, user_answer: T) -> str:
-        ...
-
-    def add_id_from_memory(self, id: int) -> None:
-        self.id = id
+    def check_answer(self, user_answer: T) -> bool: ...
 
 
-class OneAnswer(Question[str]):
+class OneAnswerQuestion(QuestionInterface[str]):
     def __init__(
         self,
         title: str,
         description: str,
         answer: str,
         reward: int = 1,
-        type: str = "ONE-ANSWER",
+        id: Optional[int] = None,
     ):
-        super().__init__(title=title, description=description, reward=reward, type=type)
-        self._answer = answer
+        self.title = title
+        self.description = description
+        self.reward = reward
+        self.type = QuestionType.ONE_ANSWER
+        self.id = id
+        self.answer = answer
 
-    @property
-    def answer(self) -> str:
-        return self._answer
-
-    @answer.setter
-    def answer(self, value: str) -> None:
-        self._answer = value
-
-    def to_dict(self, question_id: int) -> dict:
+    def to_dict(self) -> dict:
         return {
-            "id": question_id,
+            "id": self.id,
             "title": self.title,
             "description": self.description,
-            "type": "ONE-ANSWER",
-            "answer": self._answer,
+            "type": self.type,
+            "answer": self.answer,
         }
 
-    def check_answer(self, user_answer: str) -> str:
-        return "correct" if user_answer == self._answer else "wrong"
+    def check_answer(self, user_answer: str) -> bool:
+        return user_answer == self.answer
 
-
-class MultipyChoice(Question[int]):
+class MultipleChoiceQuestion(QuestionInterface[int]):
     def __init__(
         self,
         title: str,
         description: str,
-        choices: list[str],
         answer: int,
+        choices: list[str],
         reward: int = 1,
-        type: str = "MULTIPLE-CHOICE",
+        id: Optional[int] = None,
     ):
-        super().__init__(title=title, description=description, reward=reward, type=type)
-        self._answer = answer
+        self.title = title
+        self.description = description
+        self.reward = reward
+        self.type = QuestionType.MULTIPLE_CHOICE
         self.choices = choices
+        self.id = id
+        self.answer = answer
 
-    @property
-    def answer(self) -> int:
-        return self._answer
-
-    @answer.setter
-    def answer(self, value: int) -> None:
-        self._answer = value
-
-    def to_dict(self, question_id: int) -> dict:
+    def to_dict(self) -> dict:
         return {
-            "id": question_id,
+            "id": self.id,
             "title": self.title,
             "description": self.description,
-            "type": "MULTIPLE-CHOICE",
+            "type": self.type,
             "choices": self.choices,
-            "answer": self._answer,
+            "answer": self.answer,
         }
 
-    def check_answer(self, user_answer: int) -> str:
-        return "correct" if user_answer == self._answer else "wrong"
+    def check_answer(self, user_answer: int) -> bool:
+        return user_answer == self.answer

@@ -15,7 +15,7 @@ class GenerateUserInput(BaseModel):
             self.first_name[0].upper() != self.first_name[0]
             or self.last_name[0].upper() != self.last_name[0]
         ):
-            raise ValueError("Имя должно начинаться с заглавной буквы")
+            raise ValueError("Имя и отчество должны начинаться с заглавной буквы")
         return self
 
 

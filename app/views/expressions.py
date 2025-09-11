@@ -1,6 +1,6 @@
 from app.services import AnswerChecker, ExpressionServise
 from app.adapter import InMemoryDatabase
-from app.dto import GenerateExpressionInput, SolveExpressionInput
+from app import dto
 
 from app import app
 
@@ -11,13 +11,19 @@ from pydantic import ValidationError
 
 
 @app.get("/math/expression")
-def generate_expr() -> Response:    # ok
+def generate_expr() -> Response:  # ok
+    data = request.get_json()
     try:
-        expression_input = GenerateExpressionInput(**request.get_json())
-    except ValidationError as e:
-        return Response(str(e), status=HTTPStatus.BAD_REQUEST)
+        expression_input = dto.GenerateExpressionInput(
+            count_nums=data["count_nums"],
+            operation=data["operation"],
+            min=data["min"],
+            max=data["max"],
+        )
+    except ValidationError:
+        return Response("Ошибка запроса", status=HTTPStatus.BAD_REQUEST)
 
-    expression = ExpressionServise.create_expression(expression_input)
+    expression = ExpressionServise.create_expression(**expression_input.model_dump())
 
     return Response(
         dumps({"id": expression.id, "values": expression.values}),
@@ -55,11 +61,11 @@ def solve_expr(expression_id: int) -> Response:
     data = request.get_json()
 
     try:
-        input_dto = SolveExpressionInput(**data, expression_id=expression_id)
-    except ValidationError as e:
-        return Response(str(e), status=HTTPStatus.BAD_REQUEST)
+        input_dto = dto.SolveExpressionInput(user_id=data["user_id"], user_answer=data["user_answer"], expression_id=expression_id)
+    except ValidationError:
+        return Response("Ошибка запроса", status=HTTPStatus.BAD_REQUEST)
 
-    result, reward = AnswerChecker.check_expression_answer(input_dto)
+    result, reward = AnswerChecker.check_expression_answer(**input_dto.model_dump())
 
     return Response(
         dumps({"expr_id": expression_id, "result": result, "reward": reward}),
