@@ -1,4 +1,4 @@
-from app.models import Expression, User
+from app.models import Expression
 from app.adapter import InMemoryDatabase
 
 
@@ -13,3 +13,7 @@ class ExpressionCreateService:
         )
         InMemoryDatabase.add_expression(expression=expression)
         return expression
+
+    @classmethod
+    def add_expression_answer_to_history(cls, expression, user, user_answer, result, reward):
+        pass

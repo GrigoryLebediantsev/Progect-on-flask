@@ -1,9 +1,9 @@
-from app.services import AnswerChecker, QuestionServise
+from app.services import AnswerChecker, QuestionCreateService
 from app.adapter import InMemoryDatabase
 from app.exceptions import QuestionNotFoundError, UserNotFoundError
 from app import dto
 
-from app import app
+from app.application import app
 
 from pydantic import ValidationError
 from flask import request, Response
@@ -26,7 +26,7 @@ def create_question():
     except ValidationError:
         return Response("Ошибка запроса", status=HTTPStatus.BAD_REQUEST)
 
-    question = QuestionServise.create_question(question_input)
+    question = QuestionCreateService.create_question(question_input)
     question_output = question.to_dict()
 
     return Response(

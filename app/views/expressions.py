@@ -1,8 +1,9 @@
-from app.services import AnswerChecker, ExpressionServise
+from app.services import AnswerChecker, ExpressionCreateService
 from app.adapter import InMemoryDatabase
 from app import dto
+from app.exceptions import ExpressionNotFoundError
 
-from app import app
+from app.application import app
 
 from flask import request, Response
 from http import HTTPStatus
@@ -23,7 +24,11 @@ def generate_expr() -> Response:  # ok
     except ValidationError:
         return Response("Ошибка запроса", status=HTTPStatus.BAD_REQUEST)
 
-    expression = ExpressionServise.create_expression(**expression_input.model_dump())
+    expression = ExpressionCreateService.create_expression(
+        operation=expression_input.operation,
+        values=expression_input.values,
+        reward=expression_input.reward,
+    )
 
     return Response(
         dumps({"id": expression.id, "values": expression.values}),
@@ -37,7 +42,7 @@ def get_expr(expression_id: int) -> Response:
 
     try:
         expression = InMemoryDatabase.get_expression(expression_id)
-    except KeyError:
+    except ExpressionNotFoundError:
         return Response(
             "Не существует выражения с таким id", status=HTTPStatus.NOT_FOUND
         )
@@ -61,7 +66,11 @@ def solve_expr(expression_id: int) -> Response:
     data = request.get_json()
 
     try:
-        input_dto = dto.SolveExpressionInput(user_id=data["user_id"], user_answer=data["user_answer"], expression_id=expression_id)
+        input_dto = dto.SolveExpressionInput(
+            user_id=data["user_id"],
+            user_answer=data["user_answer"],
+            expression_id=expression_id,
+        )
     except ValidationError:
         return Response("Ошибка запроса", status=HTTPStatus.BAD_REQUEST)
 

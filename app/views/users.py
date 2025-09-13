@@ -1,8 +1,9 @@
 from app import dto
 from app.adapter import InMemoryDatabase
 from app.services import UserCreateService, LeaderboardGenerator
+from app.exceptions import UserNotFoundError
 
-from app import app
+from app.application import app
 
 from pydantic import ValidationError
 from flask import request, Response
@@ -19,9 +20,10 @@ def user_create() -> Response:
             last_name=data["last_name"],
             phone=data["phone"],
             email=data["email"],
-            score=data["score"],
         )
     except ValidationError:
+        return Response("Ошибка запроса", status=HTTPStatus.BAD_REQUEST)
+    except KeyError:
         return Response("Ошибка запроса", status=HTTPStatus.BAD_REQUEST)
 
     user= UserCreateService.create_user(**user_input.model_dump())
@@ -46,7 +48,7 @@ def user_create() -> Response:
 def get_user(user_id: int) -> Response:
     try:
         user = InMemoryDatabase.get_user(user_id)
-    except KeyError:
+    except UserNotFoundError:
         return Response("Пользователя с таким id не существует", status=HTTPStatus.NOT_FOUND)
     return Response(
         dumps(

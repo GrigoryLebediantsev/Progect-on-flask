@@ -1,5 +1,5 @@
 import pytest
-from app import app
+from app.application import app
 from http import HTTPStatus
 
 

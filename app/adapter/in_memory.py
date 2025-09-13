@@ -68,7 +68,7 @@ class InMemoryDatabase:
 
     @staticmethod
     def get_expression(expression_id: int) -> Expression:
-        if not expression_id in _USERS:
+        if not expression_id in _EXPRS:
             raise ExpressionNotFoundError(f"Выражение {expression_id} не найдено")
         return _EXPRS[expression_id]
 

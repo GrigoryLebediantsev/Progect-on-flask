@@ -1,6 +1,4 @@
-from flask import Response
-
-from app import app
+from app.application import app
 
 
 # @app.route("/")

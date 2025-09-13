@@ -1,4 +1,4 @@
-from app.models import QuestionInterface, OneAnswerQuestion, MultipleChoiceQuestion
+from app.models import OneAnswerQuestion, MultipleChoiceQuestion
 from app.dto import QuestionType
 from app.adapter import InMemoryDatabase
 
@@ -7,7 +7,7 @@ class QuestionInMemory:
     @classmethod
     def add_question_answer_to_history(
         cls,
-        question: QuestionInterface,
+        question: OneAnswerQuestion | MultipleChoiceQuestion,
         user_id: int,
         user_answer: int,
         result: str,

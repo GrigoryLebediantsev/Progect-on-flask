@@ -1,5 +1,6 @@
 from app.adapter import InMemoryDatabase
-from app.services import ExpressionCreateService, QuestionCreateService
+from app.services import ExpressionCreateService
+from app.services import QuestionInMemory
 
 
 class AnswerChecker:
@@ -43,7 +44,7 @@ class AnswerChecker:
             reward = 0
             result = "wrong"
 
-        QuestionCreateService.add_question_answer_to_history(
+        QuestionInMemory.add_question_answer_to_history(
             question, user_id, user_answer, result, reward
         )
 

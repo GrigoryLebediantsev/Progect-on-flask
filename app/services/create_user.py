@@ -18,5 +18,6 @@ class UserCreateService:
         )
 
         InMemoryDatabase.add_user(user=user)
+        InMemoryDatabase.create_user_history(user.id)
 
         return user

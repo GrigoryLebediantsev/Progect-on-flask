@@ -1,6 +1,6 @@
 import random
 from typing import Self, Literal,Annotated
-from pydantic import BaseModel, model_validator, computed_field, Field
+from pydantic import BaseModel, model_validator, computed_field, Field, PrivateAttr
 
 
 class GenerateExpressionInput(BaseModel):
@@ -8,7 +8,7 @@ class GenerateExpressionInput(BaseModel):
     operation: Literal["+", "-", "*", "/", "**", "random"]
     min: int
     max: int
-    _values: list[int]
+    _values: list[int] = PrivateAttr(default_factory=list)
 
     @model_validator(mode="after")
     def validate_model(self) -> Self:
@@ -16,7 +16,7 @@ class GenerateExpressionInput(BaseModel):
         self._check_count_nums()
         self._check_min_max()
         self._generate_values()
-        return Self
+        return self
 
     @computed_field
     def reward(self) -> int:
