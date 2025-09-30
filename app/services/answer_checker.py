@@ -1,6 +1,6 @@
 from app.adapter import InMemoryDatabase
 from app.services import ExpressionCreateService
-from app.services import QuestionInMemory
+from app.services.question_in_history import QuestionInMemory
 
 
 class AnswerChecker:

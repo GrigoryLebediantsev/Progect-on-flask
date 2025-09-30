@@ -35,7 +35,7 @@ class InMemoryDatabase:
         return _USERS[user_id]
 
     @staticmethod
-    def get_all_users() -> list:
+    def get_all_users() -> list[User]:
         if not _USERS:
             raise UserNotFoundError(
                 "В базе данных не обнаружено ни одного пользователя"

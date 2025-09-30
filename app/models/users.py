@@ -10,7 +10,7 @@ class User:
         self.phone = phone
         self.email = email
         self.score = score
-        self._id: Optional[int] = None
+        self.id: Optional[int] = None
 
     def increase_score(self, amount: int):
         self.score += amount
