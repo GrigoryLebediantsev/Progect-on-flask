@@ -8,15 +8,15 @@ from app.exceptions import (
 )
 
 _USERS = {}
-_users_id_counter = 0
+_users_id_counter = 1
 
 _HISTORY_ALL_USERS: dict[int, dict] = {}
 
 _EXPRS: dict = {}
-_exprs_id_counter: int = 0
+_exprs_id_counter: int = 1
 
 _QUESTS: dict = {}
-_quests_id_counter: int = 0
+_quests_id_counter: int = 1
 
 
 class InMemoryDatabase:

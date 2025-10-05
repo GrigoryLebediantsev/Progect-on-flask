@@ -1,8 +1,8 @@
-__all__ = ("views", "models", "services", "dto", "adapter", "tests", "app")
+__all__ = ("views", "models", "services", "dto", "adapter", "tests")
 
 
 from . import views, models, services, dto, adapter, tests
-from app.application import app
+# from app.application import app
 
 
 

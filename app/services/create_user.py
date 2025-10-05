@@ -1,5 +1,10 @@
 from app.models import User
 from app.adapter import InMemoryDatabase
+from app.adapter.database.in_database import Database
+
+from app.deps import get_storage
+
+Storage = get_storage()
 
 
 class UserCreateService:
@@ -17,7 +22,7 @@ class UserCreateService:
             score=score,
         )
 
-        InMemoryDatabase.add_user(user=user)
-        InMemoryDatabase.create_user_history(user.id)
+        Storage.add_user(user=user)
+        Storage.create_user_history(user.id)
 
         return user

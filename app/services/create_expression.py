@@ -1,5 +1,8 @@
 from app.models import Expression
 from app.adapter import InMemoryDatabase
+from app.deps import get_storage
+
+Storage = get_storage()
 
 
 class ExpressionCreateService:
@@ -11,7 +14,7 @@ class ExpressionCreateService:
             values,
             reward=reward,
         )
-        InMemoryDatabase.add_expression(expression=expression)
+        Storage.add_expression(expression=expression)
         return expression
 
     @classmethod

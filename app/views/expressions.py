@@ -10,6 +10,10 @@ from http import HTTPStatus
 from json import dumps
 from pydantic import ValidationError
 
+from app.deps import get_storage
+
+Storage = get_storage()
+
 
 @app.get("/math/expression")
 def generate_expr() -> Response:  # ok
@@ -41,7 +45,7 @@ def generate_expr() -> Response:  # ok
 def get_expr(expression_id: int) -> Response:
 
     try:
-        expression = InMemoryDatabase.get_expression(expression_id)
+        expression = Storage.get_expression(expression_id)
     except ExpressionNotFoundError:
         return Response(
             "Не существует выражения с таким id", status=HTTPStatus.NOT_FOUND

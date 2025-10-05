@@ -2,6 +2,10 @@ from app.models import OneAnswerQuestion, MultipleChoiceQuestion, QuestionInterf
 from app.dto import QuestionUnion, QuestionType
 from app.adapter import InMemoryDatabase
 
+from app.deps import get_storage
+
+Storage = get_storage()
+
 
 class QuestionCreateService:
 
@@ -22,7 +26,7 @@ class QuestionCreateService:
                 choices=question_input.choices,
             )
 
-        InMemoryDatabase.add_question(question=question)
+        Storage.add_question(question=question)
 
         return question
 

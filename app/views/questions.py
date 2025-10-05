@@ -10,6 +10,10 @@ from flask import request, Response
 from http import HTTPStatus
 from json import dumps
 
+from app.deps import get_storage
+
+Storage = get_storage()
+
 
 @app.post("/questions/create")
 def create_question():
@@ -37,7 +41,7 @@ def create_question():
 @app.get("/questions/random")
 def random_quest():
     try:
-        question = InMemoryDatabase.get_random_question()
+        question = Storage.get_random_question()
     except QuestionNotFoundError:
         return Response(
             "Нет ни одного вопроса в базе данных",

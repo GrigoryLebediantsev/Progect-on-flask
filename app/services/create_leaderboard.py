@@ -7,12 +7,16 @@ matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 from io import BytesIO
 
+from app.deps import get_storage
+
+Storage = get_storage()
+
 
 class LeaderboardGenerator:
 
     @staticmethod
     def create_table_leaderboard() -> Any:
-        all_users = InMemoryDatabase.get_all_users()
+        all_users = Storage.get_all_users()
         all_users_sort = sorted(all_users, key=lambda u: u.score, reverse=True)
         return [
             {
@@ -25,7 +29,7 @@ class LeaderboardGenerator:
 
     @staticmethod
     def create_graph_leaderboard():
-        all_users = InMemoryDatabase.get_all_users()
+        all_users = Storage.get_all_users()
 
         users_names = [
             user.first_name + " " + user.last_name + "\n id:" + str(user.id)

@@ -10,6 +10,10 @@ from flask import request, Response
 from http import HTTPStatus
 from json import dumps
 
+from app.deps import get_storage
+
+Storage = get_storage()
+
 
 @app.post("/users/create")
 def user_create() -> Response:
@@ -47,7 +51,7 @@ def user_create() -> Response:
 @app.get("/users/<int:user_id>/")
 def get_user(user_id: int) -> Response:
     try:
-        user = InMemoryDatabase.get_user(user_id)
+        user = Storage.get_user(user_id)
     except UserNotFoundError:
         return Response("Пользователя с таким id не существует", status=HTTPStatus.NOT_FOUND)
     return Response(
